@@ -47,7 +47,34 @@ public class ClientHandler implements Runnable {
                 }
 
                 if ("download".equals(command)) {
-                    // TODO: 14.06.2021
+                    try {
+                        File file = new File("client"  + File.separator + in.readUTF());
+                        if (!file.exists()) {
+                            file.createNewFile();
+                        }
+                        FileOutputStream fos = new FileOutputStream(file);
+
+                        long size = in.readLong();
+
+                        byte[] buffer = new byte[7 * 1024];
+
+                        for (int i = 0; i < (size + (buffer.length - 1)) / (buffer.length); i++) {
+                            /*
+                            i < (size + (buffer.length - 1)) / (buffer.length) - условие в цикле  является и "сравнением"
+                            размера исходного файла с размером буфера, если размер файла меньше размера буфера то нам
+                            потребуется одна итерация. Если же файл больше буфера то выражением из условиия мы просчитываем
+                            требуемое количество заходов в цикл для полного копированния требуемого файла. Значение i меет тип
+                            int (отбрасывается дробная часть при подсчете )/ Тем самым количество заходов в цикл
+                            всегда будет удовлетворять коптрованию файла в полном объме.
+                            */
+                            int read = in.read(buffer);
+                            fos.write(buffer, 0, read);
+                        }
+                        fos.close();
+                        out.writeUTF("OK");
+                    } catch (Exception e) {
+                        out.writeUTF("FATAL ERROR");
+                    }
                 }
                 if ("exit".equals(command)) {
                     System.out.printf("Client %s disconnected correctly\n", socket.getInetAddress());
@@ -55,7 +82,8 @@ public class ClientHandler implements Runnable {
                 }
 
                 System.out.println(command);
-                out.writeUTF(command);
+                //out.writeUTF(command); лишняя запись в поток значения переменной command,
+                //из за этой записи из потока считовалось значение command и присваивалось переменной status
             }
         } catch (Exception e) {
             e.printStackTrace();
